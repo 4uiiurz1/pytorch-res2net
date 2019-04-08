@@ -35,23 +35,23 @@ python train.py --dataset cifar100 --arch res2next29_6cx24wx6scale_se
 ### ImageNet
 - Res2Net-50:
 ```
-python train.py --dataset imagenet --imagenet-dir </path/to/data> --arch res2net50
+python train.py --dataset imagenet --imagenet-dir </path/to/data> --arch res2net50 --epoch 100 --milestones 30 --weight-decay 1e-4
 ```
 - Res2Net-101:
 ```
-python train.py --dataset imagenet --imagenet-dir </path/to/data> --arch res2net101
+python train.py --dataset imagenet --imagenet-dir </path/to/data> --arch res2net101 --epoch 100 --milestones 30 --weight-decay 1e-4
 ```
 - Res2Net-152:
 ```
-python train.py --dataset imagenet --imagenet-dir </path/to/data> --arch res2net152
+python train.py --dataset imagenet --imagenet-dir </path/to/data> --arch res2net152 --epoch 100 --milestones 30 --weight-decay 1e-4
 ```
 - Res2NeXt-50_32x4d:
 ```
-python train.py --dataset imagenet --imagenet-dir </path/to/data> --arch res2next50_32x4d
+python train.py --dataset imagenet --imagenet-dir </path/to/data> --arch res2next50_32x4d --epoch 100 --milestones 30 --weight-decay 1e-4
 ```
 - SE-Res2Net-50:
 ```
-python train.py --dataset imagenet --imagenet-dir </path/to/data> --arch se_res2net50
+python train.py --dataset imagenet --imagenet-dir </path/to/data> --arch se_res2net50 --epoch 100 --milestones 30 --weight-decay 1e-4
 ```
 
 ## Results
