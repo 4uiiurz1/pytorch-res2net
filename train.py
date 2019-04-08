@@ -24,8 +24,9 @@ def parse_args():
     parser.add_argument('--name', default=None,
                         help='model name: (default: arch+timestamp)')
     parser.add_argument('--dataset', default='cifar100',
-                        choices=['cifar100'],
+                        choices=['cifar100', 'imagenet'],
                         help='dataset name')
+    parser.add_argument('--imagenet-dir', help='path to ImageNet directory')
     parser.add_argument('--arch', default='res2next29_6cx24wx6scale_se',
                         choices=res2net.__all__,
                         help='model architecture')
@@ -169,6 +170,45 @@ def main():
             num_workers=8)
 
         num_classes = 100
+
+    elif args.dataset == 'imagenet':
+        train_dir = os.path.join(args.imagenet_dir, 'train')
+        test_dir = os.path.join(args.imagenet_dir, 'val')
+
+        transform_train = transforms.Compose([
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.485, 0.456, 0.406),
+                                 (0.229, 0.224, 0.225)),
+        ])
+        transform_test = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize((0.485, 0.456, 0.406),
+                                 (0.229, 0.224, 0.225)),
+        ])
+
+        train_set = datasets.ImageFolder(
+            train_dir,
+            transform_train)
+        train_loader = torch.utils.data.DataLoader(
+            train_set,
+            batch_size=256,
+            shuffle=True,
+            num_workers=8)
+
+        test_set = datasets.ImageFolder(
+            test_dir,
+            transform_test)
+        test_loader = torch.utils.data.DataLoader(
+            test_set,
+            batch_size=256,
+            shuffle=False,
+            num_workers=8)
+
+        num_classes = 1000
 
     # create model
     model = res2net.__dict__[args.arch]()
