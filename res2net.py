@@ -42,18 +42,18 @@ class SEModule(nn.Module):
 class Res2NetBottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, downsample=None, stride=1, scales=4, groups=1, se=False, norm_layer=None):
+    def __init__(self, inplanes, planes, downsample=None, stride=1, scales=4, groups=1, se=False,  norm_layer=None):
         super(Res2NetBottleneck, self).__init__()
         if planes % scales != 0:
             raise ValueError('Planes must be divisible by scales')
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
-        # Both self.conv2 and self.downsample layers downsample the input when stride != 1
-        self.conv1 = conv1x1(inplanes, planes, stride)
-        self.bn1 = norm_layer(planes)
-        self.conv2 = nn.ModuleList([conv3x3(planes // scales, planes // scales, groups=groups) for _ in range(scales-1)])
-        self.bn2 = nn.ModuleList([norm_layer(planes // scales) for _ in range(scales-1)])
-        self.conv3 = conv1x1(planes, planes * self.expansion)
+        bottleneck_planes = groups * planes
+        self.conv1 = conv1x1(inplanes, bottleneck_planes, stride)
+        self.bn1 = norm_layer(bottleneck_planes)
+        self.conv2 = nn.ModuleList([conv3x3(bottleneck_planes // scales, bottleneck_planes // scales, groups=groups) for _ in range(scales-1)])
+        self.bn2 = nn.ModuleList([norm_layer(bottleneck_planes // scales) for _ in range(scales-1)])
+        self.conv3 = conv1x1(bottleneck_planes, planes * self.expansion)
         self.bn3 = norm_layer(planes * self.expansion)
         self.relu = nn.ReLU(inplace=True)
         self.se = SEModule(planes * self.expansion) if se else None
@@ -96,11 +96,11 @@ class Res2NetBottleneck(nn.Module):
 
 class ImageNetRes2Net(nn.Module):
     def __init__(self, layers, num_classes=1000, zero_init_residual=False,
-                 groups=1, width_per_group=64, scales=4, se=False, norm_layer=None):
+                 groups=1, width=16, scales=4, se=False, norm_layer=None):
         super(ImageNetRes2Net, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
-        planes = [int(width_per_group * groups * 2 ** i) for i in range(4)]
+        planes = [int(width * scales * 2 ** i) for i in range(4)]
         self.inplanes = planes[0]
         self.conv1 = nn.Conv2d(3, planes[0], kernel_size=7, stride=2, padding=3,
                                bias=False)
@@ -167,11 +167,12 @@ class ImageNetRes2Net(nn.Module):
 
 class CifarRes2Net(nn.Module):
     def __init__(self, layers, num_classes=100, zero_init_residual=False,
-                 groups=1, width_per_group=64, scales=4, se=False, norm_layer=None):
+                 groups=1, width=64, scales=4, se=False, norm_layer=None):
         super(CifarRes2Net, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
-        planes = [int(width_per_group * groups * 2 ** i) for i in range(3)]
+
+        planes = [int(width * scales * 2 ** i) for i in range(3)]
         self.inplanes = planes[0]
         self.conv1 = conv3x3(3, planes[0])
         self.bn1 = norm_layer(planes[0])
@@ -255,14 +256,14 @@ def res2net152(**kwargs):
 def res2next50_32x4d(**kwargs):
     """Constructs a Res2NeXt-50_32x4d model.
     """
-    model = ImageNetRes2Net([3, 4, 6, 3], groups=4, width_per_group=32, **kwargs)
+    model = ImageNetRes2Net([3, 4, 6, 3], groups=32, width=4, **kwargs)
     return model
 
 
 def res2next101_32x8d(**kwargs):
     """Constructs a Res2NeXt-101_32x8d model.
     """
-    model = ImageNetRes2Net([3, 4, 23, 3], groups=8, width_per_group=32, **kwargs)
+    model = ImageNetRes2Net([3, 4, 23, 3], groups=32, width=8, **kwargs)
     return model
 
 
@@ -276,39 +277,39 @@ def se_res2net50(**kwargs):
 def res2next29_6cx24wx4scale(**kwargs):
     """Constructs a Res2NeXt-29, 6cx24wx4scale model.
     """
-    model = CifarRes2Net([3, 3, 3], groups=6, width_per_group=24, scales=4, **kwargs)
+    model = CifarRes2Net([3, 3, 3], groups=6, width=24, scales=4, **kwargs)
     return model
 
 
 def res2next29_8cx25wx4scale(**kwargs):
     """Constructs a Res2NeXt-29, 8cx25wx4scale model.
     """
-    model = CifarRes2Net([3, 3, 3], groups=8, width_per_group=25, scales=4, **kwargs)
+    model = CifarRes2Net([3, 3, 3], groups=8, width=25, scales=4, **kwargs)
     return model
 
 
 def res2next29_6cx24wx6scale(**kwargs):
     """Constructs a Res2NeXt-29, 6cx24wx6scale model.
     """
-    model = CifarRes2Net([3, 3, 3], groups=6, width_per_group=24, scales=6, **kwargs)
+    model = CifarRes2Net([3, 3, 3], groups=6, width=24, scales=6, **kwargs)
     return model
 
 def res2next29_6cx24wx4scale_se(**kwargs):
     """Constructs a Res2NeXt-29, 6cx24wx4scale-SE model.
     """
-    model = CifarRes2Net([3, 3, 3], groups=6, width_per_group=24, scales=4, se=True, **kwargs)
+    model = CifarRes2Net([3, 3, 3], groups=6, width=24, scales=4, se=True, **kwargs)
     return model
 
 
 def res2next29_8cx25wx4scale_se(**kwargs):
     """Constructs a Res2NeXt-29, 8cx25wx4scale-SE model.
     """
-    model = CifarRes2Net([3, 3, 3], groups=8, width_per_group=25, scales=4, se=True, **kwargs)
+    model = CifarRes2Net([3, 3, 3], groups=8, width=25, scales=4, se=True, **kwargs)
     return model
 
 
 def res2next29_6cx24wx6scale_se(**kwargs):
     """Constructs a Res2NeXt-29, 6cx24wx6scale-SE model.
     """
-    model = CifarRes2Net([3, 3, 3], groups=6, width_per_group=24, scales=6, se=True, **kwargs)
+    model = CifarRes2Net([3, 3, 3], groups=6, width=24, scales=6, se=True, **kwargs)
     return model
